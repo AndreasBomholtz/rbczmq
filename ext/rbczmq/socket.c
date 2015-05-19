@@ -1254,6 +1254,25 @@ static VALUE rb_czmq_socket_set_opt_router_mandatory(VALUE obj, VALUE value)
 
 /*
  *  call-seq:
+ *     sock.router_handover = true =>  nil
+ *
+ *  Sets the socket ROUTER_HANDOVER value.
+ *
+ * === Examples
+ *     ctx = ZMQ::Context.new
+ *     sock = ctx.socket(:REP)
+ *     sock.router_handover = true  =>  nil
+ *
+*/
+
+static VALUE rb_czmq_socket_set_opt_router_handover(VALUE obj, VALUE value)
+{
+    zmq_sock_wrapper *sock = NULL;
+    ZmqSetBooleanSockOpt(obj, zsocket_set_router_handover, "ROUTER_HANDOVER", value);
+}
+
+/*
+ *  call-seq:
  *     sock.router_raw= true =>  nil
  *
  *  Sets the socket ROUTER_RAW value.
@@ -1769,6 +1788,7 @@ static VALUE rb_czmq_nogvl_monitor_recv(void *ptr)
 
 static VALUE rb_czmq_socket_monitor_thread(void *arg)
 {
+/* AB
     zmq_event_t event;
     struct nogvl_monitor_recv_args args;
     int rc;
@@ -1816,7 +1836,7 @@ static VALUE rb_czmq_socket_monitor_thread(void *arg)
             rb_funcall(sock->monitor_handler, method, 2, endpoint_str, INT2FIX(event.value));
         }
 
-        /* once the socket is marked as destroyed, it appears to be not safe to call receive on it. */
+        // once the socket is marked as destroyed, it appears to be not safe to call receive on it.
         if (sock->flags & ZMQ_SOCKET_DESTROYED)
         {
             break;
@@ -1825,6 +1845,7 @@ static VALUE rb_czmq_socket_monitor_thread(void *arg)
         zmq_msg_close(&args.msg_event);
         zmq_msg_close(&args.msg_endpoint);
     }
+*/
     /* leave the socket to be closed when the context is destroyed on the main/other thread.
         This additional thread is likely to be terminated by termination, interrupt or the
         end of the application's normal executing when the context is destroyed.
@@ -1949,6 +1970,7 @@ void _init_rb_czmq_socket()
     rb_define_method(rb_cZmqSocket, "ipv4only=", rb_czmq_socket_set_opt_ipv4only, 1);
     rb_define_method(rb_cZmqSocket, "delay_attach_on_connect=", rb_czmq_socket_set_opt_delay_attach_on_connect, 1);
     rb_define_method(rb_cZmqSocket, "router_mandatory=", rb_czmq_socket_set_opt_router_mandatory, 1);
+    rb_define_method(rb_cZmqSocket, "router_handover=", rb_czmq_socket_set_opt_router_handover, 1);
     rb_define_method(rb_cZmqSocket, "router_raw=", rb_czmq_socket_set_opt_router_raw, 1);
     rb_define_method(rb_cZmqSocket, "xpub_verbose=", rb_czmq_socket_set_opt_xpub_verbose, 1);
     rb_define_method(rb_cZmqSocket, "sndbuf", rb_czmq_socket_opt_sndbuf, 0);

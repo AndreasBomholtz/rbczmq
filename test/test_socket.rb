@@ -262,7 +262,7 @@ class TestZmqSocket < ZmqTestCase
   ensure
     ctx.destroy
   end
-  
+
   def test_send_receive_with_percent_in_string
     ctx = ZMQ::Context.new
     rep = ctx.socket(:PAIR)
@@ -287,7 +287,7 @@ class TestZmqSocket < ZmqTestCase
   ensure
     ctx.destroy
   end
-  
+
   def test_verbose
     ctx = ZMQ::Context.new
     rep = ctx.socket(:PAIR)
@@ -464,7 +464,7 @@ class TestZmqSocket < ZmqTestCase
 
     assert_equal 1000, sock.sndhwm
     sock.sndhwm = 10000
-    assert_equal 10000, sock.sndhwm      
+    assert_equal 10000, sock.sndhwm
 
     assert_equal 1000, sock.rcvhwm
     sock.rcvhwm = 10000
@@ -496,6 +496,7 @@ class TestZmqSocket < ZmqTestCase
 
     sock.delay_attach_on_connect = true
     sock.router_mandatory = true
+    sock.router_handover = true
     sock.router_raw = true
 
     xpub = ctx.socket(:XPUB)
