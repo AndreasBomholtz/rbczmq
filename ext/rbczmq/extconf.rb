@@ -104,6 +104,7 @@ if with_config('system-libs')
 else
   lib = libs_path + "libsodium.#{LIBEXT}"
   Dir.chdir libsodium_path do
+    sys "pwd", "pwd"
     sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
     sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
         "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
@@ -117,6 +118,7 @@ if with_config('system-libs')
 else
   lib = libs_path + "libzmq.#{LIBEXT}"
   Dir.chdir zmq_path do
+    sys "pwd", "pwd"
     sys "./autogen.sh", "ZeroMQ autogen failed!" unless File.exist?(zmq_path + 'configure')
     sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared --without-libsodium ",
         "ZeroMQ configure failed" unless File.exist?(zmq_path + 'Makefile')
@@ -130,6 +132,7 @@ if with_config('system-libs')
 else
   lib = libs_path + "libczmq.#{LIBEXT}"
   Dir.chdir czmq_path do
+    sys "pwd", "pwd"
     sys "./autogen.sh", "CZMQ autogen failed!" unless File.exist?(czmq_path + 'configure')
     sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --disable-shared --without-libsodium", #--with-libsodium=#{dst_path}
         "CZMQ configure error!" unless File.exist?(czmq_path + 'Makefile')
