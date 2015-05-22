@@ -121,6 +121,7 @@ else
     sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
         "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
     sys "make -j && make install", "LibSodium compile error!"
+    sys "ldconfig -N", "ldconfig error!"
   end #unless File.exist?(lib)
 end
 
@@ -131,8 +132,9 @@ else
   lib = libs_path + "libczmq.#{LIBEXT}"
   Dir.chdir czmq_path do
     sys "./autogen.sh", "CZMQ autogen failed!" unless File.exist?(czmq_path + 'configure')
-    sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --with-libsodium=#{dst_path} --disable-shared",
+    sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --disable-shared --without-libsodium",
         "CZMQ configure error!" unless File.exist?(czmq_path + 'Makefile')
+# --with-libsodium=#{dst_path}
     sys "make -j all && make install", "CZMQ compile error!"
   end #unless File.exist?(lib)
 end
