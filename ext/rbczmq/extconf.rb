@@ -115,14 +115,13 @@ end
 if with_config('system-libs')
   $stderr.puts "Warning -- using system version of libsodium."
 else
-  lib = libs_path + "libsodium.#{LIBEXT}"
-  Dir.chdir libsodium_path do
-    sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
-    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
-        "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
-    sys "make -j && make install", "LibSodium compile error!"
-    sys "ldconfig -N", "ldconfig error!"
-  end #unless File.exist?(lib)
+  #lib = libs_path + "libsodium.#{LIBEXT}"
+  #Dir.chdir libsodium_path do
+  #  sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
+  #  sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
+  #      "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
+  #  sys "make -j && make install", "LibSodium compile error!"
+  #end #unless File.exist?(lib)
 end
 
 # build libczmq
@@ -132,9 +131,8 @@ else
   lib = libs_path + "libczmq.#{LIBEXT}"
   Dir.chdir czmq_path do
     sys "./autogen.sh", "CZMQ autogen failed!" unless File.exist?(czmq_path + 'configure')
-    sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --disable-shared --without-libsodium",
+    sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --disable-shared --without-libsodium", #--with-libsodium=#{dst_path}
         "CZMQ configure error!" unless File.exist?(czmq_path + 'Makefile')
-# --with-libsodium=#{dst_path}
     sys "make -j all && make install", "CZMQ compile error!"
   end #unless File.exist?(lib)
 end
