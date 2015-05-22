@@ -98,6 +98,19 @@ unless File.exist?(zmq_path + 'autogen.sh')
   sys "cd ../.. && git submodule update --init", "Checking out git submodules error!"
 end
 
+# build libsodium
+if with_config('system-libs')
+  $stderr.puts "Warning -- using system version of libsodium."
+else
+  lib = libs_path + "libsodium.#{LIBEXT}"
+  Dir.chdir libsodium_path do
+    sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
+    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
+        "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
+    sys "make -j && make install", "LibSodium compile error!"
+  end #unless File.exist?(lib)
+end
+
 # build libzmq
 if with_config('system-libs')
   $stderr.puts "Warning -- using system version of libzmq."
@@ -105,23 +118,10 @@ else
   lib = libs_path + "libzmq.#{LIBEXT}"
   Dir.chdir zmq_path do
     sys "./autogen.sh", "ZeroMQ autogen failed!" unless File.exist?(zmq_path + 'configure')
-    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
+    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared--without-libsodium ",
         "ZeroMQ configure failed" unless File.exist?(zmq_path + 'Makefile')
     sys "make -j && make install", "ZeroMQ compile error!"
   end #unless File.exist?(lib)
-end
-
-# build libsodium
-if with_config('system-libs')
-  $stderr.puts "Warning -- using system version of libsodium."
-else
-  #lib = libs_path + "libsodium.#{LIBEXT}"
-  #Dir.chdir libsodium_path do
-  #  sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
-  #  sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
-  #      "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
-  #  sys "make -j && make install", "LibSodium compile error!"
-  #end #unless File.exist?(lib)
 end
 
 # build libczmq
