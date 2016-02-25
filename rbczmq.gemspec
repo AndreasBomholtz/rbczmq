@@ -5,7 +5,7 @@ require File.expand_path('../lib/zmq/version', __FILE__)
 Gem::Specification.new do |s|
   s.name = "rbczmq"
   s.version = ZMQ::VERSION
-  s.summary = "Ruby extension for ZeroMQ (ZMQ) using CZMQ - High-level C Binding for ØMQ (http://czmq.zeromq.org)"
+  s.summary = "Ruby extension for ZeroMQ (ZMQ) using CZMQ"
   s.description = "Ruby extension for ZeroMQ (ZMQ) using CZMQ - High-level C Binding for ØMQ (http://czmq.zeromq.org)"
   s.authors = ["Lourens Naudé", "James Tucker", "Matt Connolly"]
   s.email = ["lourens@methodmissing.com", "jftucker@gmail.com", "matt.connolly@me.com"]
@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files test`.split("\n")
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.add_development_dependency('minitest', '~> 5.5.0')
+  s.add_development_dependency('minitest', '~> 5.5', '>= 5.5.0')
   s.add_development_dependency('rake-compiler', '~> 0.8.0')
 
   # get an array of submodule dirs by executing 'pwd' inside each submodule

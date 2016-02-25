@@ -268,14 +268,25 @@ static VALUE rb_czmq_ctx_set_iothreads(VALUE obj, VALUE threads)
 
 static VALUE rb_czmq_ctx_set_linger(VALUE obj, VALUE linger)
 {
-    errno = 0;
     int msecs;
+    errno = 0;
     ZmqGetContext(obj);
     ZmqAssertContextPidMatches(ctx);
     Check_Type(linger, T_FIXNUM);
     msecs = FIX2INT(linger);
     if (msecs < 0) rb_raise(rb_eZmqError, "negative linger / timeout values is not supported.");
     zctx_set_linger(ctx->ctx, msecs);
+    return Qnil;
+}
+
+static VALUE rb_czmq_ctx_set_max_sockets(ZMQ_UNUSED VALUE obj, VALUE max)
+{
+    int msocks;
+    errno = 0;
+    Check_Type(max, T_FIXNUM);
+    msocks = FIX2INT(max);
+    if (msocks < 0) rb_raise(rb_eZmqError, "negative max sockets values is not supported.");
+    zsys_set_max_sockets(msocks);
     return Qnil;
 }
 
@@ -406,6 +417,7 @@ void _init_rb_czmq_context()
     rb_define_method(rb_cZmqContext, "destroy", rb_czmq_ctx_destroy, 0);
     rb_define_method(rb_cZmqContext, "iothreads=", rb_czmq_ctx_set_iothreads, 1);
     rb_define_method(rb_cZmqContext, "linger=", rb_czmq_ctx_set_linger, 1);
+    rb_define_method(rb_cZmqContext, "max_sockets=", rb_czmq_ctx_set_max_sockets, 1);
     rb_define_method(rb_cZmqContext, "socket", rb_czmq_ctx_socket, 1);
 
     context_mutex = zmutex_new();
