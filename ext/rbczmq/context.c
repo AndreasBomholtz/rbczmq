@@ -279,14 +279,17 @@ static VALUE rb_czmq_ctx_set_linger(VALUE obj, VALUE linger)
     return Qnil;
 }
 
-static VALUE rb_czmq_ctx_set_max_sockets(ZMQ_UNUSED VALUE obj, VALUE max)
+static VALUE rb_czmq_ctx_set_max_sockets(VALUE obj, VALUE max)
 {
     int msocks;
     errno = 0;
+    ZmqGetContext(obj);
+    ZmqAssertContextPidMatches(ctx);
     Check_Type(max, T_FIXNUM);
     msocks = FIX2INT(max);
     if (msocks < 0) rb_raise(rb_eZmqError, "negative max sockets values is not supported.");
-    zsys_set_max_sockets(msocks);
+    zmq_ctx_set(ctx->ctx,ZMQ_MAX_SOCKETS,msocks);
+
     return Qnil;
 }
 

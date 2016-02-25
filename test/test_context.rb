@@ -36,7 +36,7 @@ class TestZmqContext < ZmqTestCase
   def test_iothreads
     ctx = ZMQ::Context.new
     assert_raises TypeError do
-      ctx.iothreads = :invalid  
+      ctx.iothreads = :invalid
     end
     ctx.iothreads = 2
     assert_raises ZMQ::Error do
@@ -49,11 +49,25 @@ class TestZmqContext < ZmqTestCase
   def test_linger
     ctx = ZMQ::Context.new
     assert_raises TypeError do
-      ctx.linger = :invalid 
+      ctx.linger = :invalid
     end
     ctx.linger = 10
     assert_raises ZMQ::Error do
       ctx.linger = -2
+    end
+  ensure
+    ctx.destroy
+  end
+
+  def test_max_sockets
+    ctx = ZMQ::Context.new
+    assert_raises TypeError do
+      ctx.max_sockets = :invalid
+    end
+    ctx.max_sockets = 10
+    ctx.max_sockets = 0
+    assert_raises ZMQ::Error do
+      ctx.max_sockets = -2
     end
   ensure
     ctx.destroy
