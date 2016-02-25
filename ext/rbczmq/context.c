@@ -288,6 +288,7 @@ static VALUE rb_czmq_ctx_sockets_limit(VALUE obj)
     errno = 0;
     ZmqGetContext(obj);
     ZmqAssertContextPidMatches(ctx);
+    if(zctx_underlying(ctx->ctx) == 0) rb_raise(rb_eZmqError, "ZMQ Context is NULL.");
 
     msocks = zmq_ctx_get(zctx_underlying(ctx->ctx),ZMQ_SOCKET_LIMIT);
     if (zmq_errno() == EINVAL) ZmqRaiseSysError();
@@ -302,6 +303,7 @@ static VALUE rb_czmq_ctx_max_sockets(VALUE obj)
     errno = 0;
     ZmqGetContext(obj);
     ZmqAssertContextPidMatches(ctx);
+    if(zctx_underlying(ctx->ctx) == 0) rb_raise(rb_eZmqError, "ZMQ Context is NULL.");
 
     msocks = zmq_ctx_get(zctx_underlying(ctx->ctx),ZMQ_MAX_SOCKETS);
     if (zmq_errno() == EINVAL) ZmqRaiseSysError();
@@ -319,6 +321,7 @@ static VALUE rb_czmq_ctx_set_max_sockets(VALUE obj, VALUE max)
     Check_Type(max, T_FIXNUM);
     msocks = FIX2INT(max);
     if (msocks < 0) rb_raise(rb_eZmqError, "negative max sockets values is not supported.");
+    if(zctx_underlying(ctx->ctx) == 0) rb_raise(rb_eZmqError, "ZMQ Context is NULL.");
 
     zmq_ctx_set(zctx_underlying(ctx->ctx),ZMQ_MAX_SOCKETS,msocks);
     if (zmq_errno() == EINVAL) ZmqRaiseSysError();
