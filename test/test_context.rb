@@ -59,30 +59,6 @@ class TestZmqContext < ZmqTestCase
     ctx.destroy
   end
 
-  def test_max_sockets
-    ctx = ZMQ::Context.new
-    assert_raises TypeError do
-      ctx.max_sockets = :invalid
-    end
-    ctx.max_sockets = 10
-    assert_equal 10, ctx.max_sockets
-    ctx.max_sockets = 10240
-    assert_equal 10240, ctx.max_sockets
-    assert_raises ZMQ::Error do
-      ctx.max_sockets = -2
-    end
-  ensure
-    ctx.destroy
-  end
-
-  def test_sockets_limits
-    ctx = ZMQ::Context.new
-    p ctx.sockets_limit
-    assert_equal 65535, ctx.sockets_limit
-  ensure
-    ctx.destroy
-  end
-
   def test_bind_connect
     ctx = ZMQ::Context.new
     rep = ctx.bind(:REP, "inproc://test.bind_connect")

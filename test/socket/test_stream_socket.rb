@@ -30,6 +30,13 @@ class TestStreamSocket < ZmqTestCase
       # The second frame is the data received over the TCP socket.
       assert_equal 2, msg.size
 
+      msg = sock.recv_message
+
+      # Messages received from a STREAM socket are in two parts:
+      # The first frame is an identiy frame.
+      # The second frame is the data received over the TCP socket.
+      assert_equal 2, msg.size
+
       # first frame is the identity frame.
       identity = msg.pop
       assert_equal "hello", msg.first.to_s

@@ -1734,6 +1734,32 @@ static VALUE rb_czmq_socket_set_opt_sndtimeo(VALUE obj, VALUE value)
     ZmqSetSockOpt(obj, zsocket_set_sndtimeo, "SNDTIMEO", value);
 }
 
+static VALUE rb_czmq_socket_opt_tcp_keepalive(VALUE obj)
+{
+    zmq_sock_wrapper *sock = NULL;
+    GetZmqSocket(obj);
+    return INT2NUM(zsocket_tcp_keepalive(sock->socket));
+}
+
+static VALUE rb_czmq_socket_set_opt_tcp_keepalive(VALUE obj, VALUE value)
+{
+    zmq_sock_wrapper *sock = NULL;
+    ZmqSetSockOpt(obj, zsocket_set_tcp_keepalive, "TCP_KEEPALIVE", value);
+}
+
+static VALUE rb_czmq_socket_opt_tcp_keepalive_idle(VALUE obj)
+{
+    zmq_sock_wrapper *sock = NULL;
+    GetZmqSocket(obj);
+    return INT2NUM(zsocket_tcp_keepalive_idle(sock->socket));
+}
+
+static VALUE rb_czmq_socket_set_opt_tcp_keepalive_idle(VALUE obj, VALUE value)
+{
+    zmq_sock_wrapper *sock = NULL;
+    ZmqSetSockOpt(obj, zsocket_set_tcp_keepalive_idle, "TCP_KEEPALIVE_IDLE", value);
+}
+
 
 /*
  *  call-seq:
@@ -1994,6 +2020,10 @@ void _init_rb_czmq_socket()
     rb_define_method(rb_cZmqSocket, "rcvtimeo=", rb_czmq_socket_set_opt_rcvtimeo, 1);
     rb_define_method(rb_cZmqSocket, "sndtimeo", rb_czmq_socket_opt_sndtimeo, 0);
     rb_define_method(rb_cZmqSocket, "sndtimeo=", rb_czmq_socket_set_opt_sndtimeo, 1);
+//    rb_define_method(rb_cZmqSocket, "tcp_keepalive", rb_czmq_socket_opt_tcp_keepalive, 0);
+//    rb_define_method(rb_cZmqSocket, "tcp_keepalive=", rb_czmq_socket_set_opt_tcp_keepalive, 1);
+    rb_define_method(rb_cZmqSocket, "tcp_keepalive_idle", rb_czmq_socket_opt_tcp_keepalive_idle, 0);
+    rb_define_method(rb_cZmqSocket, "tcp_keepalive_idle=", rb_czmq_socket_set_opt_tcp_keepalive_idle, 1);
     rb_define_method(rb_cZmqSocket, "monitor", rb_czmq_socket_monitor, -1);
     rb_define_method(rb_cZmqSocket, "last_endpoint", rb_czmq_socket_opt_last_endpoint, 0);
 }
