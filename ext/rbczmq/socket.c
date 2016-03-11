@@ -2020,8 +2020,8 @@ void _init_rb_czmq_socket()
     rb_define_method(rb_cZmqSocket, "rcvtimeo=", rb_czmq_socket_set_opt_rcvtimeo, 1);
     rb_define_method(rb_cZmqSocket, "sndtimeo", rb_czmq_socket_opt_sndtimeo, 0);
     rb_define_method(rb_cZmqSocket, "sndtimeo=", rb_czmq_socket_set_opt_sndtimeo, 1);
-//    rb_define_method(rb_cZmqSocket, "tcp_keepalive", rb_czmq_socket_opt_tcp_keepalive, 0);
-//    rb_define_method(rb_cZmqSocket, "tcp_keepalive=", rb_czmq_socket_set_opt_tcp_keepalive, 1);
+    rb_define_method(rb_cZmqSocket, "tcp_keepalive", rb_czmq_socket_opt_tcp_keepalive, 0);
+    rb_define_method(rb_cZmqSocket, "tcp_keepalive=", rb_czmq_socket_set_opt_tcp_keepalive, 1);
     rb_define_method(rb_cZmqSocket, "tcp_keepalive_idle", rb_czmq_socket_opt_tcp_keepalive_idle, 0);
     rb_define_method(rb_cZmqSocket, "tcp_keepalive_idle=", rb_czmq_socket_set_opt_tcp_keepalive_idle, 1);
     rb_define_method(rb_cZmqSocket, "monitor", rb_czmq_socket_monitor, -1);

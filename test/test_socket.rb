@@ -535,9 +535,9 @@ class TestZmqSocket < ZmqTestCase
     sock.sndtimeo = 200
     assert_equal 200, sock.sndtimeo
 
-#    assert_equal(-1, sock.tcp_keepalive)
-#    sock.tcp_keepalive = 200
-#    assert_equal 200, sock.tcp_keepalive
+    assert_equal(-1, sock.tcp_keepalive)
+    sock.tcp_keepalive = 1
+    assert_equal 1, sock.tcp_keepalive
 
     assert_equal(-1, sock.tcp_keepalive_idle)
     sock.tcp_keepalive_idle = 200
