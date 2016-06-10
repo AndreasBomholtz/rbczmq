@@ -9,15 +9,6 @@ class TestZmqMessage < ZmqTestCase
     assert_nil msg.destroy
   end
 
-  def test_destroyed
-    msg = ZMQ::Message("one", "two")
-    assert msg.encode
-    assert !msg.gone?
-    msg.destroy
-    assert msg.gone?
-    assert_nil msg.encode
-  end
-
   def test_message_sugar
     msg = ZMQ::Message("one", "two", "three")
     assert_equal "one", msg.popstr
@@ -165,21 +156,6 @@ class TestZmqMessage < ZmqTestCase
     assert_operator dup_msg.object_id, :!=, msg.object_id
     assert_equal msg.size, dup_msg.size
     assert_equal "header", msg.popstr
-  end
-
-  def test_encode_decode
-    msg =  ZMQ::Message.new
-    msg.pushstr "body"
-    msg.pushstr "header"
-
-    expected = "\006header\004body"
-    assert_equal expected, msg.encode
-
-    decoded = ZMQ::Message.decode(expected)
-    assert_equal "header", decoded.popstr
-    assert_equal "body", decoded.popstr
-
-    assert_nil ZMQ::Message.decode("tainted")
   end
 
   def test_equals
