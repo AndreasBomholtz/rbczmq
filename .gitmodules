@@ -3,7 +3,7 @@
 	url = https://github.com/zeromq/zeromq4-1.git
 [submodule "ext/czmq"]
 	path = ext/czmq
-	url = https://github.com/AndreasBomholtz/czmq.git
+	url = https://github.com/zeromq/czmq.git
 [submodule "ext/libsodium"]
 	path = ext/libsodium
 	url = https://github.com/jedisct1/libsodium.git
