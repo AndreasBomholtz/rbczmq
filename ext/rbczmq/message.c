@@ -598,8 +598,6 @@ static VALUE rb_czmq_message_destroy(VALUE obj)
 static VALUE rb_czmq_message_eql_p(VALUE obj, VALUE other_message)
 {
     zmq_message_wrapper *other = NULL;
-    zframe_t *frame;
-    zframe_t *other_frame;
 
     ZmqGetMessage(obj);
     ZmqAssertMessage(other_message);
@@ -611,9 +609,7 @@ static VALUE rb_czmq_message_eql_p(VALUE obj, VALUE other_message)
     if (zmsg_size(message->message) != zmsg_size(other->message)) return Qfalse;
     if (zmsg_content_size(message->message) != zmsg_content_size(other->message)) return Qfalse;
 
-    frame = zmsg_encode(message->message);
-    other_frame = zmsg_encode(other->message);
-    if(!zframe_eq(frame,other_frame)) return Qfalse;
+    if(!zmsg_eq(message->message, other->message)) return Qfalse;
     return Qtrue;
 }
 
