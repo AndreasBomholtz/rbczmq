@@ -311,7 +311,7 @@ class TestZmqSocket < ZmqTestCase
     req = ctx.socket(:REQ)
     req.connect("tcp://127.0.0.1:#{port}")
     assert req.send("ping")
-    assert_equal nil, rep.recv_nonblock
+    assert_nil rep.recv_nonblock
     sleep 0.2
     assert_equal "ping", rep.recv_nonblock
   ensure
@@ -440,7 +440,7 @@ class TestZmqSocket < ZmqTestCase
     msg = ZMQ::Message.new
     msg.push ZMQ::Frame("header")
 
-    assert_nil req.send_message(msg)
+    assert_equal false, req.send_message(msg)
 
     recvd_msg = rep.recv_message
     assert_instance_of ZMQ::Message, recvd_msg
@@ -544,9 +544,9 @@ class TestZmqSocket < ZmqTestCase
     assert_equal 200, sock.tcp_keepalive_idle
 
 
-if sock.respond_to?(:raw=)
-    sock.raw = true
-end
+    if sock.respond_to?(:raw=)
+      sock.raw = true
+    end
 
     sock.identity = "anonymous"
     assert_raises ZMQ::Error do

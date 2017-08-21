@@ -697,8 +697,7 @@ static VALUE rb_czmq_nogvl_send_message(void *ptr)
     struct nogvl_send_message_args *args = ptr;
     zmq_sock_wrapper *socket = args->socket;
     errno = 0;
-    zmsg_send(&(args->message), socket->socket);
-    return Qnil;
+    return zmsg_send(&(args->message), socket->socket);
 }
 
 /*
@@ -722,6 +721,8 @@ static VALUE rb_czmq_socket_send_message(VALUE obj, VALUE message_obj)
     struct nogvl_send_message_args args;
     zmsg_t *print_message = NULL;
     zmq_sock_wrapper *sock = NULL;
+    VALUE res = Qnil;
+
     GetZmqSocket(obj);
     ZmqAssertSocketNotPending(sock, "can only send on a bound or connected socket!");
     ZmqSockGuardCrossThread(sock);
@@ -730,10 +731,10 @@ static VALUE rb_czmq_socket_send_message(VALUE obj, VALUE message_obj)
     if (sock->verbose) print_message = zmsg_dup(message->message);
     args.socket = sock;
     args.message = message->message;
-    rb_thread_call_without_gvl(rb_czmq_nogvl_send_message, (void *)&args, RUBY_UBF_IO, 0);
+    res = rb_thread_call_without_gvl(rb_czmq_nogvl_send_message, (void *)&args, RUBY_UBF_IO, 0);
     message->flags &= ~ZMQ_MESSAGE_OWNED;
     if (sock->verbose) ZmqDumpMessage("send_message", print_message);
-    return Qnil;
+    return res;
 }
 
 /*
