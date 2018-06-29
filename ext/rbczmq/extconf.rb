@@ -43,6 +43,9 @@ end
 
 CZMQ_CFLAGS = %w(-g)
 
+# Disable depricated declarations error for gcc 6
+CZMQ_CFLAGS << "-Wno-deprecated-declarations"
+
 case RUBY_PLATFORM
 when /mswin32/, /mingw32/, /bccwin32/
   check_heads(%w[windows.h winsock.h], true)
