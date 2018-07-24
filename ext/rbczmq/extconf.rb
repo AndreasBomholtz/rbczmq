@@ -45,9 +45,6 @@ CZMQ_CFLAGS = %w(-g)
 
 # Disable depricated declarations error for gcc 6
 CZMQ_CFLAGS << "-Wno-deprecated-declarations"
-# Disable pedantic and format-security errors
-CZMQ_CFLAGS << "-Wno-pedantic"
-CZMQ_CFLAGS << "-Wno-error=format-security"
 
 case RUBY_PLATFORM
 when /mswin32/, /mingw32/, /bccwin32/
@@ -165,9 +162,7 @@ end
 fail "Error compiling and linking libzmq" unless have_library("zmq")
 fail "Error compiling and linking libczmq" unless have_library("czmq")
 
-$defs << "-pedantic"
-
-$CFLAGS << ' -Wall -funroll-loops -std=c99'
+$CFLAGS << ' -Wall -funroll-loops -std=c99 -Wno-error=format-security -Wno-pedantic'
 $CFLAGS << ' -Wextra -O0 -ggdb3' if ENV['DEBUG']
 
 create_makefile('rbczmq_ext')
