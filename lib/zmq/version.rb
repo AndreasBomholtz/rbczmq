@@ -1,5 +1,5 @@
 # encoding: utf-8
 
 module ZMQ
-  VERSION = "1.8.5.9"
+  VERSION = "1.8.5.10"
 end

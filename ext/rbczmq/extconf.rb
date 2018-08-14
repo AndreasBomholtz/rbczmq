@@ -45,6 +45,8 @@ CZMQ_CFLAGS = %w(-g)
 
 # Disable depricated declarations error for gcc 6
 CZMQ_CFLAGS << "-Wno-deprecated-declarations"
+# Disable format-truncation warnings treated as errors - gcc 7
+CZMQ_CFLAGS << "-Wno-error=format-truncation="
 
 case RUBY_PLATFORM
 when /mswin32/, /mingw32/, /bccwin32/
