@@ -48,8 +48,8 @@ CZMQ_CFLAGS << "-Wno-deprecated-declarations"
 
 out = `gcc --version`
 if $?.exitstatus == 0
-    # GCC version is the last element of the first line
-    gcc_ver = out.split("\n")[0].split(" ").last
+    # GCC version includes a MAJOR.MINOR.PATCH surrounded by spaces
+    gcc_ver = out.split("\n")[0].match('( \d\.\d\.\d )')[1].gsub(' ', '')
     # It is constructed as follows MAJOR.MINOR.PATCH
     major_gcc_ver = gcc_ver.split(".").first
 
