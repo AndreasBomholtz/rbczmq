@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rbczmq (1.8.5.5)
+    rbczmq (1.8.6)
 
 GEM
   remote: https://rubygems.org/
@@ -227,4 +227,4 @@ DEPENDENCIES
   rubysl (~> 2.0)
 
 BUNDLED WITH
-   1.13.6
+   1.15.4
