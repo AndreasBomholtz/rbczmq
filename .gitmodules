@@ -1,9 +1,9 @@
 [submodule "ext/zeromq"]
 	path = ext/zeromq
-	url = https://github.com/Seluxit/zeromq4-1.git
+	url = https://github.com/zeromq/libzmq
 [submodule "ext/czmq"]
 	path = ext/czmq
-	url = https://github.com/zeromq/czmq.git
+	url = https://github.com/zeromq/czmq
 [submodule "ext/libsodium"]
 	path = ext/libsodium
 	url = https://github.com/jedisct1/libsodium.git
