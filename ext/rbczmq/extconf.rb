@@ -42,6 +42,19 @@ def check_heads heads = [], fatal = false
 end
 
 CZMQ_CFLAGS = %w(-g)
+CZMQ_CFLAGS << "-Wno-error=pragmas"
+
+# Disable depricated declarations error for gcc 6
+CZMQ_CFLAGS << "-Wno-deprecated-declarations"
+
+out = `gcc -dumpversion`
+if $?.exitstatus == 0
+    # It is constructed as follows MAJOR.MINOR.PATCH
+    major_gcc_ver = out.chomp.split(".").first
+
+    # Disable format-truncation warnings treated as errors - gcc 7 and higher
+    CZMQ_CFLAGS << "-Wno-error=format-truncation=" if major_gcc_ver.to_i >= 7
+end
 
 case RUBY_PLATFORM
 when /mswin32/, /mingw32/, /bccwin32/
