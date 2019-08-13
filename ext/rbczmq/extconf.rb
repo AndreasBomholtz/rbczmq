@@ -108,7 +108,7 @@ else
     sys "./autogen.sh", "libsodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
     sys "./configure CFLAGS='#{CZMQ_CFLAGS.join(" ")}' CXXFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --without-documentation --disable-shared --enable-static --disable-pie",
         "libsodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
-    sys "make -j && make install", "libsodium compile error!"
+    sys "make && make install", "libsodium compile error!"
   end
 end
 
@@ -121,7 +121,7 @@ else
     sys "./autogen.sh", "ZeroMQ autogen failed!" unless File.exist?(zmq_path + 'configure')
     sys "./configure CFLAGS='#{CZMQ_CFLAGS.join(" ")}' CXXFLAGS='#{CZMQ_CFLAGS.join(" ")}' PKG_CONFIG_PATH='#{libs_path}/pkgconfig' --prefix=#{dst_path} --without-documentation --disable-shared --enable-static --with-libsodium=#{dst_path}",
         "ZeroMQ configure failed" unless File.exist?(zmq_path + 'Makefile')
-    sys "make -j && make install", "ZeroMQ compile error!"
+    sys "make && make install", "ZeroMQ compile error!"
   end
 end
 
@@ -134,7 +134,7 @@ else
     sys "./autogen.sh", "CZMQ autogen failed!" unless File.exist?(czmq_path + 'configure')
     sys "./configure LDFLAGS='-L#{libs_path} -lm' CFLAGS='#{CZMQ_CFLAGS.join(" ")}' PKG_CONFIG_PATH='#{libs_path}/pkgconfig' --prefix=#{dst_path} --disable-shared --enable-static --without-makecert --without-test_zgossip --with-libsodium=#{dst_path}",
         "CZMQ configure error!" unless File.exist?(czmq_path + 'Makefile')
-    sys "make -j all && make install", "CZMQ compile error!"
+    sys "make all && make install", "CZMQ compile error!"
   end
 end
 
