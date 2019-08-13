@@ -45,7 +45,7 @@ class TestPushPullSockets < ZmqTestCase
     msg = ZMQ::Message.new
     msg.push ZMQ::Frame("header")
 
-    assert_equal false, push.send_message(msg)
+    assert_nil push.send_message(msg)
 
     recvd_msg = pull.recv_message
     assert_instance_of ZMQ::Message, recvd_msg

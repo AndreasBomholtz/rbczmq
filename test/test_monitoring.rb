@@ -25,30 +25,30 @@ end
 class TestZmqMonitoring < ZmqTestCase
   def test_monitoring
     ctx = ZMQ::Context.new
-    #sock = ctx.socket(:REP)
-    #assert_raises TypeError do
-    #  sock.monitor(:invalid)
-    #end
+    sock = ctx.socket(:REP)
+    assert_raises TypeError do
+      sock.monitor(:invalid)
+    end
 
-    #assert_raises TypeError do
-    #  sock.monitor("inproc://monitor.rep", nil, :invalid)
-    #end
+    assert_raises TypeError do
+      sock.monitor("inproc://monitor.rep", nil, :invalid)
+    end
 
-    #cb = TestMonitor.new
+    cb = TestMonitor.new
 
-    #assert !sock.monitor("tcp://0.0.0.0:5000")
-    #assert sock.monitor("inproc://monitor.rep", cb)
-    #sleep 1
-    #port = sock.bind("tcp://127.0.0.1:*")
-    #sleep 1
-    #assert cb.listening
-    #client = ctx.socket(:REQ)
-    #client.connect("tcp://127.0.0.1:#{port}")
-    #sleep 1
-    #assert cb.accepted
-    #sock.close
-    #sleep 1
-    #assert cb.closed
+    assert !sock.monitor("tcp://0.0.0.0:5000")
+    assert sock.monitor("inproc://monitor.rep", cb)
+    sleep 1
+    port = sock.bind("tcp://127.0.0.1:*")
+    sleep 1
+    assert cb.listening
+    client = ctx.socket(:REQ)
+    client.connect("tcp://127.0.0.1:#{port}")
+    sleep 1
+    assert cb.accepted
+    sock.close
+    sleep 1
+    assert cb.closed
   ensure
     ctx.destroy
   end

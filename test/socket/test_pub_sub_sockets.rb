@@ -47,7 +47,7 @@ class TestPubSubSockets < ZmqTestCase
     msg = ZMQ::Message.new
     msg.push ZMQ::Frame("header")
 
-    assert_equal false, pub.send_message(msg)
+    assert_nil pub.send_message(msg)
 
     recvd_msg = sub.recv_message
     assert_instance_of ZMQ::Message, recvd_msg

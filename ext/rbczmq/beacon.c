@@ -5,14 +5,19 @@
  *  Destroy the beacon while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_beacon_destroy(void *ptr)
+static VALUE rb_czmq_nogvl_beacon_destroy(void *ptr)
 {
     zmq_beacon_wrapper *beacon = ptr;
+
     if (beacon->beacon) {
-        zbeacon_destroy(&beacon->beacon);
+        zactor_destroy(&beacon->beacon);
         beacon->beacon = NULL;
     }
-    return (void*)Qnil;
+
+    if (beacon->hostname) {
+        zstr_free(&beacon->hostname);
+    }
+    return Qnil;
 }
 
 /*
@@ -34,10 +39,18 @@ static void rb_czmq_free_beacon_gc(void *ptr)
  *  Allocate a beacon while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_new_beacon(void *ptr)
+static VALUE rb_czmq_nogvl_new_beacon(void *ptr)
 {
-    int port = (int)ptr;
-    return (void*)zbeacon_new(NULL, port);
+    zmq_beacon_wrapper *beacon = ptr;
+
+    beacon->beacon = zactor_new(zbeacon, NULL);
+    beacon->interval = 1000;
+
+    zsock_send(beacon->beacon, "si", "CONFIGURE", beacon->port);
+    beacon->hostname = zstr_recv(beacon->beacon);
+    assert (beacon->hostname != NULL);
+
+    return Qnil;
 }
 
 /*
@@ -53,11 +66,12 @@ static void* rb_czmq_nogvl_new_beacon(void *ptr)
 static VALUE rb_czmq_beacon_s_new(VALUE beacon, VALUE port)
 {
     zmq_beacon_wrapper *bcn = NULL;
-    int prt;
     Check_Type(port, T_FIXNUM);
     beacon = Data_Make_Struct(rb_cZmqBeacon, zmq_beacon_wrapper, 0, rb_czmq_free_beacon_gc, bcn);
-    prt = FIX2INT(port);
-    bcn->beacon = (zbeacon_t*)rb_thread_call_without_gvl(rb_czmq_nogvl_new_beacon, (void *)prt, RUBY_UBF_IO, 0);
+    bcn->port = FIX2INT(port);
+    if (bcn->port == 0)
+        rb_raise(rb_eArgError, "port must not be zero!");
+    rb_thread_call_without_gvl(rb_czmq_nogvl_new_beacon, (void *)bcn, RUBY_UBF_IO, 0);
     ZmqAssertObjOnAlloc(bcn->beacon, bcn);
     rb_obj_call_init(beacon, 0, NULL);
     return beacon;
@@ -94,20 +108,7 @@ static VALUE rb_czmq_beacon_destroy(VALUE obj)
 static VALUE rb_czmq_beacon_hostname(VALUE obj)
 {
     GetZmqBeacon(obj);
-    return rb_str_new2(zbeacon_hostname(beacon->beacon));
-}
-
-/*
- * :nodoc:
- *  Set the beacon broadcast interval while the GIL is released.
- *
-*/
-static void* rb_czmq_nogvl_set_interval(void *ptr)
-{
-    struct nogvl_beacon_interval_args *args = ptr;
-    zmq_beacon_wrapper *beacon = args->beacon;
-    zbeacon_set_interval(beacon->beacon, args->interval);
-    return (void*)Qnil;
+    return rb_str_new2(beacon->hostname);
 }
 
 /*
@@ -125,22 +126,8 @@ static VALUE rb_czmq_beacon_set_interval(VALUE obj, VALUE interval)
     struct nogvl_beacon_interval_args args;
     GetZmqBeacon(obj);
     Check_Type(interval, T_FIXNUM);
-    args.beacon = beacon;
-    args.interval = FIX2INT(interval);
-    rb_thread_call_without_gvl(rb_czmq_nogvl_set_interval, (void *)&args, RUBY_UBF_IO, 0);
+    beacon->interval = FIX2INT(interval);
     return Qnil;
-}
-
-/*
- * :nodoc:
- *  Filter beacons while the GIL is released.
- *
-*/
-static void* rb_czmq_nogvl_noecho(void *ptr)
-{
-    zmq_beacon_wrapper *beacon = ptr;
-    zbeacon_noecho(beacon->beacon);
-    return (void*)Qnil;
 }
 
 /*
@@ -156,7 +143,7 @@ static void* rb_czmq_nogvl_noecho(void *ptr)
 static VALUE rb_czmq_beacon_noecho(VALUE obj)
 {
     GetZmqBeacon(obj);
-    rb_thread_call_without_gvl(rb_czmq_nogvl_noecho, (void *)beacon, RUBY_UBF_IO, 0);
+    /* XXX: Nothing to do here, as v3 always filters out our own message */
     return Qnil;
 }
 
@@ -165,12 +152,13 @@ static VALUE rb_czmq_beacon_noecho(VALUE obj)
  *  Broadcast beacon while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_publish(void *ptr)
+static VALUE rb_czmq_nogvl_publish(void *ptr)
 {
     struct nogvl_beacon_publish_args *args = ptr;
     zmq_beacon_wrapper *beacon = args->beacon;
-    zbeacon_publish(beacon->beacon, (byte *)args->transmit ,args->length);
-    return (void*)Qnil;
+    zsock_send(beacon->beacon, "sbi", "PUBLISH", (byte *)args->transmit,
+               args->length, beacon->interval);
+    return Qnil;
 }
 
 /*
@@ -200,11 +188,11 @@ static VALUE rb_czmq_beacon_publish(VALUE obj, VALUE transmit)
  *  Silence beacon while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_silence(void *ptr)
+static VALUE rb_czmq_nogvl_silence(void *ptr)
 {
     zmq_beacon_wrapper *beacon = ptr;
-    zbeacon_silence(beacon->beacon);
-    return (void*)Qnil;
+    zstr_sendx(beacon->beacon, "SILENCE", NULL);
+    return Qnil;
 }
 
 /*
@@ -229,12 +217,13 @@ static VALUE rb_czmq_beacon_silence(VALUE obj)
  *  Start listening to peers while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_subscribe(void *ptr)
+static VALUE rb_czmq_nogvl_subscribe(void *ptr)
 {
     struct nogvl_beacon_subscribe_args *args = ptr;
     zmq_beacon_wrapper *beacon = args->beacon;
-    zbeacon_subscribe(beacon->beacon, (byte *)args->filter ,args->length);
-    return (void*)Qnil;
+    zsock_send(beacon->beacon, "sb", "SUBSCRIBE", (byte *)args->filter,
+               args->length);
+    return Qnil;
 }
 
 /*
@@ -269,11 +258,11 @@ static VALUE rb_czmq_beacon_subscribe(VALUE obj, VALUE filter)
  *  Stop listening to peers while the GIL is released.
  *
 */
-static void* rb_czmq_nogvl_unsubscribe(void *ptr)
+static VALUE rb_czmq_nogvl_unsubscribe(void *ptr)
 {
     zmq_beacon_wrapper *beacon = ptr;
-    zbeacon_unsubscribe(beacon->beacon);
-    return (void*)Qnil;
+    zstr_sendx(beacon->beacon, "UNSUBSCRIBE", NULL);
+    return Qnil;
 }
 
 /*
@@ -298,7 +287,7 @@ static VALUE rb_czmq_beacon_pipe(VALUE obj)
     zmq_sock_wrapper *sock = NULL;
     VALUE socket;
     GetZmqBeacon(obj);
-    socket = rb_czmq_socket_alloc(Qnil, NULL, zbeacon_socket(beacon->beacon));
+    socket = rb_czmq_socket_alloc(Qnil, NULL, zsock_resolve(beacon->beacon));
     GetZmqSocket(socket);
     sock->state = ZMQ_SOCKET_BOUND;
     return socket;

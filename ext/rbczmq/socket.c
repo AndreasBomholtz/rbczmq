@@ -697,7 +697,8 @@ static VALUE rb_czmq_nogvl_send_message(void *ptr)
     struct nogvl_send_message_args *args = ptr;
     zmq_sock_wrapper *socket = args->socket;
     errno = 0;
-    return zmsg_send(&(args->message), socket->socket);
+    zmsg_send(&(args->message), socket->socket);
+    return Qnil;
 }
 
 /*
@@ -721,8 +722,6 @@ static VALUE rb_czmq_socket_send_message(VALUE obj, VALUE message_obj)
     struct nogvl_send_message_args args;
     zmsg_t *print_message = NULL;
     zmq_sock_wrapper *sock = NULL;
-    VALUE res = Qnil;
-
     GetZmqSocket(obj);
     ZmqAssertSocketNotPending(sock, "can only send on a bound or connected socket!");
     ZmqSockGuardCrossThread(sock);
@@ -731,10 +730,10 @@ static VALUE rb_czmq_socket_send_message(VALUE obj, VALUE message_obj)
     if (sock->verbose) print_message = zmsg_dup(message->message);
     args.socket = sock;
     args.message = message->message;
-    res = rb_thread_call_without_gvl(rb_czmq_nogvl_send_message, (void *)&args, RUBY_UBF_IO, 0);
+    rb_thread_call_without_gvl(rb_czmq_nogvl_send_message, (void *)&args, RUBY_UBF_IO, 0);
     message->flags &= ~ZMQ_MESSAGE_OWNED;
     if (sock->verbose) ZmqDumpMessage("send_message", print_message);
-    return res;
+    return Qnil;
 }
 
 /*
@@ -1784,6 +1783,39 @@ static VALUE rb_czmq_socket_opt_last_endpoint(VALUE obj)
 }
 
 /*
+ *  call-seq:
+ *     sock.stream_notify = false =>  nil
+ *
+ *  Sets the socket stream_notify value.
+ *
+ * === Examples
+ *     ctx = ZMQ::Context.new
+ *     sock = ctx.socket(:STREAM)
+ *     sock.stream_notify = false  =>  nil
+ *
+*/
+
+static VALUE rb_czmq_socket_set_opt_stream_notify(VALUE obj, VALUE value)
+{
+    int rc, optval;
+    zmq_sock_wrapper *sock = NULL;
+
+    GetZmqSocket(obj);
+    ZmqSockGuardCrossThread(sock);
+    CheckBoolean(value);
+    optval = (value == Qtrue) ? 1 : 0;
+
+    rc = zmq_setsockopt(sock->socket, ZMQ_STREAM_NOTIFY, &optval, sizeof(optval));
+    ZmqAssert(rc);
+
+    if (sock->verbose)
+        zclock_log ("I: %s socket %p: set option \"STREAM_NOTIFY\" %d",
+                    zsocket_type_str(sock->socket), (void *)obj, optval);
+
+    return Qnil;
+}
+
+/*
  * :nodoc:
  *  Receives a monitoring event message while the GIL is released.
  *
@@ -1815,7 +1847,6 @@ static VALUE rb_czmq_nogvl_monitor_recv(void *ptr)
 
 static VALUE rb_czmq_socket_monitor_thread(void *arg)
 {
-/* AB
     zmq_event_t event;
     struct nogvl_monitor_recv_args args;
     int rc;
@@ -1872,7 +1903,7 @@ static VALUE rb_czmq_socket_monitor_thread(void *arg)
         zmq_msg_close(&args.msg_event);
         zmq_msg_close(&args.msg_endpoint);
     }
-*/
+
     /* leave the socket to be closed when the context is destroyed on the main/other thread.
         This additional thread is likely to be terminated by termination, interrupt or the
         end of the application's normal executing when the context is destroyed.
@@ -2027,4 +2058,5 @@ void _init_rb_czmq_socket()
     rb_define_method(rb_cZmqSocket, "tcp_keepalive_idle=", rb_czmq_socket_set_opt_tcp_keepalive_idle, 1);
     rb_define_method(rb_cZmqSocket, "monitor", rb_czmq_socket_monitor, -1);
     rb_define_method(rb_cZmqSocket, "last_endpoint", rb_czmq_socket_opt_last_endpoint, 0);
+    rb_define_method(rb_cZmqStreamSocket, "stream_notify=", rb_czmq_socket_set_opt_stream_notify, 1);
 }

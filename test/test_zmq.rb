@@ -10,17 +10,17 @@ class TestZmq < ZmqTestCase
   def test_version
     version = ZMQ.version
     assert_instance_of Array, version
-    assert version.all?{|v| Fixnum === v }
+    assert version.all?{|v| Integer === v }
   end
 
   def test_czmq_version
     version = ZMQ.czmq_version
     assert_instance_of Array, version
-    assert version.all?{|v| Fixnum === v }
+    assert version.all?{|v| Integer === v }
   end
 
   def test_now
-    assert [Bignum, Fixnum].include?(ZMQ.now.class)
+    assert [Integer].include?(ZMQ.now.class)
   end
 
   def test_log
@@ -33,7 +33,7 @@ class TestZmq < ZmqTestCase
   end
 
   def test_errno
-    assert_instance_of Fixnum, ZMQ.errno
+    assert_instance_of Integer, ZMQ.errno
   end
 
   def test_select

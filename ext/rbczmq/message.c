@@ -584,6 +584,54 @@ static VALUE rb_czmq_message_destroy(VALUE obj)
 
 /*
  *  call-seq:
+ *     msg.encode    =>  string
+ *
+ *  Encodes the message to a new buffer.
+ *
+ * === Examples
+ *     msg = ZMQ::Message.new    =>  ZMQ::Message
+ *     msg.pushstr "body"
+ *     msg.pushstr "header"
+ *     msg.encode     =>   "\006header\004body"
+ *
+*/
+
+static VALUE rb_czmq_message_encode(VALUE obj)
+{
+    byte *buff;
+    size_t buff_size;
+    ZmqGetMessage(obj);
+    ZmqReturnNilUnlessOwned(message);
+    buff_size = zmsg_encode(message->message, &buff);
+    VALUE result = rb_str_new((char *)buff, buff_size);
+    free(buff);
+    return result;
+}
+
+/*
+ *  call-seq:
+ *     ZMQ::Message.decode("\006header\004body")    =>  ZMQ::Message
+ *
+ *  Decode a buffer into a new message. Returns nil if the buffer is not properly formatted.
+ *
+ * === Examples
+ *     msg = ZMQ::Message.decode("\006header\004body")
+ *     msg.popstr     =>   "header"
+ *     msg.popstr     =>   "body"
+ *
+*/
+
+static VALUE rb_czmq_message_s_decode(ZMQ_UNUSED VALUE obj, VALUE buffer)
+{
+    zmsg_t * m = NULL;
+    Check_Type(buffer, T_STRING);
+    m = zmsg_decode((byte *)RSTRING_PTR(buffer), RSTRING_LEN(buffer));
+    if (m == NULL) return Qnil;
+    return rb_czmq_alloc_message(m);
+}
+
+/*
+ *  call-seq:
  *     msg.eql?(other)    =>  boolean
  *
  *  Determines if a message equals another. True if size, content size and serialized representation is equal.
@@ -598,7 +646,10 @@ static VALUE rb_czmq_message_destroy(VALUE obj)
 static VALUE rb_czmq_message_eql_p(VALUE obj, VALUE other_message)
 {
     zmq_message_wrapper *other = NULL;
-
+    byte *buff = NULL;
+    size_t buff_size;
+    byte *other_buff = NULL;
+    size_t other_buff_size;
     ZmqGetMessage(obj);
     ZmqAssertMessage(other_message);
     ZmqAssertMessageOwned(message);
@@ -609,7 +660,10 @@ static VALUE rb_czmq_message_eql_p(VALUE obj, VALUE other_message)
     if (zmsg_size(message->message) != zmsg_size(other->message)) return Qfalse;
     if (zmsg_content_size(message->message) != zmsg_content_size(other->message)) return Qfalse;
 
-    if(!zmsg_eq(message->message, other->message)) return Qfalse;
+    buff_size = zmsg_encode(message->message, &buff);
+    other_buff_size = zmsg_encode(other->message, &other_buff);
+    if (buff_size != other_buff_size) return Qfalse;
+    if (strncmp((const char*)buff, (const char*)other_buff, buff_size) != 0) return Qfalse;
     return Qtrue;
 }
 
@@ -680,6 +734,8 @@ void _init_rb_czmq_message()
 {
     rb_cZmqMessage = rb_define_class_under(rb_mZmq, "Message", rb_cObject);
 
+    rb_define_singleton_method(rb_cZmqMessage, "decode", rb_czmq_message_s_decode, 1);
+
     rb_define_alloc_func(rb_cZmqMessage, rb_czmq_message_new);
     rb_define_method(rb_cZmqMessage, "size", rb_czmq_message_size, 0);
     rb_define_method(rb_cZmqMessage, "content_size", rb_czmq_message_content_size, 0);
@@ -698,6 +754,7 @@ void _init_rb_czmq_message()
     rb_define_method(rb_cZmqMessage, "addstr", rb_czmq_message_addstr, 1);
     rb_define_method(rb_cZmqMessage, "dup", rb_czmq_message_dup, 0);
     rb_define_method(rb_cZmqMessage, "destroy", rb_czmq_message_destroy, 0);
+    rb_define_method(rb_cZmqMessage, "encode", rb_czmq_message_encode, 0);
     rb_define_method(rb_cZmqMessage, "eql?", rb_czmq_message_equals, 1);
     rb_define_method(rb_cZmqMessage, "==", rb_czmq_message_equals, 1);
     rb_define_method(rb_cZmqMessage, "to_a", rb_czmq_message_to_a, 0);

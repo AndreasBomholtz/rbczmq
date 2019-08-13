@@ -26,9 +26,9 @@ vendor_path = cwd + '..'
 zmq_path = vendor_path + 'zeromq'
 czmq_path = vendor_path + 'czmq'
 libsodium_path = vendor_path + 'libsodium'
+libsodium_include_path = libsodium_path + 'include'
 zmq_include_path = zmq_path + 'include'
 czmq_include_path = czmq_path + 'include'
-libsodium_include_path = libsodium_path + 'src/libsodium/include'
 
 # Fail early if we don't meet the following dependencies.
 
@@ -42,18 +42,6 @@ def check_heads heads = [], fatal = false
 end
 
 CZMQ_CFLAGS = %w(-g)
-
-# Disable depricated declarations error for gcc 6
-CZMQ_CFLAGS << "-Wno-deprecated-declarations"
-
-out = `gcc -dumpversion`
-if $?.exitstatus == 0
-    # It is constructed as follows MAJOR.MINOR.PATCH
-    major_gcc_ver = out.chomp.split(".").first
-
-    # Disable format-truncation warnings treated as errors - gcc 7 and higher
-    CZMQ_CFLAGS << "-Wno-error=format-truncation=" if major_gcc_ver.to_i >= 7
-end
 
 case RUBY_PLATFORM
 when /mswin32/, /mingw32/, /bccwin32/
@@ -99,6 +87,7 @@ when /aix/
 
 when /linux/
   CZMQ_CFLAGS << "-fPIC"
+  CONFIG['LDSHARED'] = "$(CXX) -shared -lstdc++ -fPIC"
 
 else
   # on Unix we need a g++ link, not gcc.
@@ -116,12 +105,11 @@ if with_config('system-libs')
 else
   lib = libs_path + "libsodium.#{LIBEXT}"
   Dir.chdir libsodium_path do
-    sys "pwd", "pwd"
-    sys "./autogen.sh", "LibSodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
-    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared",
-        "LibSodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
-    sys "make -j && make install", "LibSodium compile error!"
-  end #unless File.exist?(lib)
+    sys "./autogen.sh", "libsodium autogen failed!" unless File.exist?(libsodium_path + 'configure')
+    sys "./configure CFLAGS='#{CZMQ_CFLAGS.join(" ")}' CXXFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --without-documentation --disable-shared --enable-static --disable-pie",
+        "libsodium configure failed" unless File.exist?(libsodium_path + 'Makefile')
+    sys "make -j && make install", "libsodium compile error!"
+  end
 end
 
 # build libzmq
@@ -130,12 +118,11 @@ if with_config('system-libs')
 else
   lib = libs_path + "libzmq.#{LIBEXT}"
   Dir.chdir zmq_path do
-    sys "pwd", "pwd"
     sys "./autogen.sh", "ZeroMQ autogen failed!" unless File.exist?(zmq_path + 'configure')
-    sys "./configure --prefix=#{dst_path} --without-documentation --enable-shared --without-libsodium ",
+    sys "./configure CFLAGS='#{CZMQ_CFLAGS.join(" ")}' CXXFLAGS='#{CZMQ_CFLAGS.join(" ")}' PKG_CONFIG_PATH='#{libs_path}/pkgconfig' --prefix=#{dst_path} --without-documentation --disable-shared --enable-static --with-libsodium=#{dst_path}",
         "ZeroMQ configure failed" unless File.exist?(zmq_path + 'Makefile')
     sys "make -j && make install", "ZeroMQ compile error!"
-  end #unless File.exist?(lib)
+  end
 end
 
 # build libczmq
@@ -144,12 +131,11 @@ if with_config('system-libs')
 else
   lib = libs_path + "libczmq.#{LIBEXT}"
   Dir.chdir czmq_path do
-    sys "pwd", "pwd"
     sys "./autogen.sh", "CZMQ autogen failed!" unless File.exist?(czmq_path + 'configure')
-    sys "./configure LDFLAGS=-L#{libs_path} CFLAGS='#{CZMQ_CFLAGS.join(" ")}' --prefix=#{dst_path} --with-libzmq=#{dst_path} --disable-shared --without-libsodium", #--with-libsodium=#{dst_path}
+    sys "./configure LDFLAGS='-L#{libs_path} -lm' CFLAGS='#{CZMQ_CFLAGS.join(" ")}' PKG_CONFIG_PATH='#{libs_path}/pkgconfig' --prefix=#{dst_path} --disable-shared --enable-static --without-makecert --without-test_zgossip --with-libsodium=#{dst_path}",
         "CZMQ configure error!" unless File.exist?(czmq_path + 'Makefile')
     sys "make -j all && make install", "CZMQ compile error!"
-  end #unless File.exist?(lib)
+  end
 end
 
 dir_config('rbczmq')
@@ -158,6 +144,7 @@ have_header('ruby/thread.h')
 have_func('rb_thread_blocking_region')
 have_func('rb_thread_call_without_gvl')
 
+$INCFLAGS << " -I#{libsodium_include_path}" if find_header("sodium.h", libsodium_include_path)
 $INCFLAGS << " -I#{zmq_include_path}" if find_header("zmq.h", zmq_include_path)
 $INCFLAGS << " -I#{czmq_include_path}" if find_header("czmq.h", czmq_include_path)
 
@@ -168,10 +155,15 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE =~ /rbx/ && RUBY_PLATFORM =~ /linux/
   CONFIG['LDSHARED'] = "#{CONFIG['LDSHARED']} -Wl,-rpath=#{libs_path.to_s}"
 end
 
+fail "Error compiling and linking libsodium" unless have_library("sodium")
 fail "Error compiling and linking libzmq" unless have_library("zmq")
 fail "Error compiling and linking libczmq" unless have_library("czmq")
+fail "Error linking against libm" unless have_library("m")
 
-$CFLAGS << ' -Wall -funroll-loops -std=c99 -Wno-error=format-security -Wno-pedantic'
+$defs << "-pedantic"
+
+$CFLAGS  << ' -Wall -funroll-loops'
 $CFLAGS << ' -Wextra -O0 -ggdb3' if ENV['DEBUG']
+$LDFLAGS << " -Wl,-rpath,'$$ORIGIN/dst/lib/'"
 
 create_makefile('rbczmq_ext')

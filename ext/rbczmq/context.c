@@ -268,8 +268,8 @@ static VALUE rb_czmq_ctx_set_iothreads(VALUE obj, VALUE threads)
 
 static VALUE rb_czmq_ctx_set_linger(VALUE obj, VALUE linger)
 {
-    int msecs;
     errno = 0;
+    int msecs;
     ZmqGetContext(obj);
     ZmqAssertContextPidMatches(ctx);
     Check_Type(linger, T_FIXNUM);
